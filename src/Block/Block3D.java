@@ -10,9 +10,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Block3D extends JFrame {
-    private static final int HEIGHT = 800;
-    private static final int WIDTH = 800;
+public class Block3D extends JPanel {
+    private static int HEIGHT = 800;
+    private static int WIDTH = 800;
     private double[][] vertices = {
         {-100, -100, -100},
         {100, -100, -100},
@@ -44,11 +44,11 @@ public class Block3D extends JFrame {
     private BufferedImage texture;
 
     public Block3D(String texturePath) {
-        setTitle("3D Engine");
-        setSize(WIDTH, HEIGHT);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-
+        // setTitle("3D Engine");
+        // setSize(WIDTH, HEIGHT);
+        // setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // setLocationRelativeTo(null);
+        setPreferredSize(new Dimension(WIDTH, HEIGHT));
         // Load the texture image
         loadTexture(texturePath);
 
@@ -173,14 +173,42 @@ public class Block3D extends JFrame {
         return depth / face.length;
     }
 
+    // @Override
+    // public void paint(Graphics g) {
+    //     BufferedImage buffer = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    //     Graphics2D g2d = buffer.createGraphics();
+
+    //     // Draw background
+    //     g2d.setColor(Color.WHITE);
+    //     g2d.fillRect(0, 0, WIDTH, HEIGHT);
+
+    //     List<Face> faceList = new ArrayList<>();
+    //     for (int i = 0; i < faces.length; i++) {
+    //         int[] face = faces[i];
+    //         double depth = calculateFaceDepth(face);
+    //         faceList.add(new Face(face, depth));
+    //     }
+
+    //     // Sort faces by depth (farthest to nearest)
+    //     Collections.sort(faceList);
+
+    //     // Draw faces with texture mapping
+    //     for (Face face : faceList) {
+    //         drawTexturedFace(buffer, face.vertices);
+    //     }
+
+    //     g.drawImage(buffer, 0, 0, this);
+    // }
+
     @Override
-    public void paint(Graphics g) {
-        BufferedImage buffer = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        BufferedImage buffer = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = buffer.createGraphics();
 
         // Draw background
         g2d.setColor(Color.WHITE);
-        g2d.fillRect(0, 0, WIDTH, HEIGHT);
+        g2d.fillRect(0, 0, getWidth(), getHeight());
 
         List<Face> faceList = new ArrayList<>();
         for (int i = 0; i < faces.length; i++) {
@@ -199,6 +227,7 @@ public class Block3D extends JFrame {
 
         g.drawImage(buffer, 0, 0, this);
     }
+
 
     private void drawTexturedFace(BufferedImage buffer, int[] faceVertices) {
         Point3D[] projectedPoints = new Point3D[4];
