@@ -11,8 +11,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class Block3D extends JPanel {
-    private static int HEIGHT = 800;
-    private static int WIDTH = 800;
+    private int HEIGHT = 800;
+    private int WIDTH = 800;
     private double[][] vertices = {
         {-100, -100, -100},
         {100, -100, -100},
@@ -51,6 +51,31 @@ public class Block3D extends JPanel {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         // Load the texture image
         loadTexture(texturePath);
+
+        addComponentListener(new ComponentListener() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                WIDTH = getWidth();
+                HEIGHT = getHeight();
+                repaint();
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent e) {
+                
+            }
+
+            @Override
+            public void componentShown(ComponentEvent e) {
+                
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                
+            }
+
+        });
 
         addMouseListener(new MouseAdapter() {
             @Override
@@ -158,7 +183,7 @@ public class Block3D extends JPanel {
 
     private Point3D project3D(double[] point3D) {
         double z = 400;
-        double baseScale = 500;
+        double baseScale = Math.min(WIDTH, HEIGHT) * 0.625;
         double projZ = z - point3D[2];
         int x = (int) (point3D[0] * baseScale * scale / projZ + WIDTH / 2);
         int y = (int) (point3D[1] * baseScale * scale / projZ + HEIGHT / 2);
