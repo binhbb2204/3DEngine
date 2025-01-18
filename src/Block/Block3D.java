@@ -13,6 +13,10 @@ import java.util.List;
 public class Block3D extends JPanel {
     private int HEIGHT = 800;
     private int WIDTH = 800;
+
+    private double posX = 0;
+    private double posY = 0;
+    private double posZ = 0;
     private double[][] vertices = {
         {-100, -100, -100},
         {100, -100, -100},
@@ -42,6 +46,13 @@ public class Block3D extends JPanel {
     private double scale = 1.0;
     private static final double ZOOM_FACTOR = 0.1;
     private BufferedImage texture;
+    private static final double CAMERA_DISTANCE = 1000;
+
+    public Block3D(String texturePath, double x, double y, double z){
+        this(texturePath);
+        setPosition(x, y, z);
+        
+    }
 
     public Block3D(String texturePath) {
         // setTitle("3D Engine");
@@ -116,6 +127,13 @@ public class Block3D extends JPanel {
         });
     }
 
+    private void setPosition(double x, double y, double z){
+        this.posX = x;
+        this.posY = y;
+        this.posZ = z;
+        repaint();
+    }
+
     private void loadTexture(String texturePath) {
         try {
             // Load the image file
@@ -163,26 +181,33 @@ public class Block3D extends JPanel {
     }
 
     private double[] rotatePoint(double[] point) {
+
+        double[] translate = new double[3];
+
+        translate[0] = point[0] + posX;
+        translate[1] = point[1] + posY;
+        translate[2] = point[2] + posZ;
         double[] rotated = new double[3];
 
         // Rotate around Y axis
         double cosY = Math.cos(angleY);
         double sinY = Math.sin(angleY);
-        double tempX = point[0] * cosY + point[2] * sinY;
-        double tempZ = -point[0] * sinY + point[2] * cosY;
+        double tempX = translate[0] * cosY + translate[2] * sinY;
+        double tempZ = -translate[0] * sinY + translate[2] * cosY;
 
         // Rotate around X axis
         double cosX = Math.cos(angleX);
         double sinX = Math.sin(angleX);
         rotated[0] = tempX;
-        rotated[1] = point[1] * cosX - tempZ * sinX;
-        rotated[2] = point[1] * sinX + tempZ * cosX;
+        rotated[1] = translate[1] * cosX - tempZ * sinX;
+        rotated[2] = translate[1] * sinX + tempZ * cosX;
 
         return rotated;
     }
 
     private Point3D project3D(double[] point3D) {
-        double z = 400;
+        double z = CAMERA_DISTANCE - 400;
+        if (z < 1) z = 1;
         double baseScale = Math.min(WIDTH, HEIGHT) * 0.625;
         double projZ = z - point3D[2];
         int x = (int) (point3D[0] * baseScale * scale / projZ + WIDTH / 2);
@@ -228,12 +253,12 @@ public class Block3D extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        BufferedImage buffer = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+        BufferedImage buffer = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = buffer.createGraphics();
 
         // Draw background
         g2d.setColor(Color.WHITE);
-        g2d.fillRect(0, 0, getWidth(), getHeight());
+        g2d.fillRect(0, 0, WIDTH, HEIGHT);
 
         List<Face> faceList = new ArrayList<>();
         for (int i = 0; i < faces.length; i++) {

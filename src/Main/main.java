@@ -28,7 +28,7 @@ public class main {
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setResizable(true);
             // Create the Block3D panel
-            Block3D block3D = new Block3D(texturePath);
+            Block3D block3D = new Block3D(texturePath, 0, 0, 5);
 
             // Add the panel to the frame
             frame.add(block3D);
