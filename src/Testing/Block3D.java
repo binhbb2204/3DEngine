@@ -10,9 +10,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Block3D extends JFrame {
-    private static final int HEIGHT = 800;
-    private static final int WIDTH = 800;
+public class Block3D extends JPanel {
+    private int HEIGHT = 800;
+    private int WIDTH = 800;
+
+    private double posX = 0;
+    private double posY = 0;
+    private double posZ = 0;
     private double[][] vertices = {
         {-100, -100, -100},
         {100, -100, -100},
@@ -39,16 +43,50 @@ public class Block3D extends JFrame {
     private double angleX = 0;
     private double angleY = 0;
     private Point lastMousePos;
+    private double scale = 1.0;
+    private static final double ZOOM_FACTOR = 0.1;
     private BufferedImage texture;
+    private static final double CAMERA_DISTANCE = 1000;
+
+    public Block3D(String texturePath, double x, double y, double z){
+        this(texturePath);
+        setPosition(x, y, z);
+        
+    }
 
     public Block3D(String texturePath) {
-        setTitle("3D Engine");
-        setSize(WIDTH, HEIGHT);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-
+        // setTitle("3D Engine");
+        // setSize(WIDTH, HEIGHT);
+        // setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // setLocationRelativeTo(null);
+        setPreferredSize(new Dimension(WIDTH, HEIGHT));
         // Load the texture image
         loadTexture(texturePath);
+
+        addComponentListener(new ComponentListener() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                WIDTH = getWidth();
+                HEIGHT = getHeight();
+                repaint();
+            }
+
+            @Override
+            public void componentMoved(ComponentEvent e) {
+                
+            }
+
+            @Override
+            public void componentShown(ComponentEvent e) {
+                
+            }
+
+            @Override
+            public void componentHidden(ComponentEvent e) {
+                
+            }
+
+        });
 
         addMouseListener(new MouseAdapter() {
             @Override
@@ -72,6 +110,28 @@ public class Block3D extends JFrame {
                 }
             }
         });
+        addMouseWheelListener(new MouseWheelListener() {
+            @Override
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                if(e.getWheelRotation() < 0){
+                    scale *= (1 + ZOOM_FACTOR);
+                }
+                else{
+                    scale *= (1 - ZOOM_FACTOR);
+                }
+
+                scale = Math.max(0.1, Math.min(scale, 5.0));
+                repaint();
+            }
+            
+        });
+    }
+
+    private void setPosition(double x, double y, double z){
+        this.posX = x;
+        this.posY = y;
+        this.posZ = z;
+        repaint();
     }
 
     private void loadTexture(String texturePath) {
@@ -79,7 +139,7 @@ public class Block3D extends JFrame {
             // Load the image file
             texture = ImageIO.read(new File(texturePath));
             
-            // Optional: resize texture to power of 2 dimensions for better performance
+            // resize texture to power of 2 dimensions for better performance
             int targetWidth = nextPowerOfTwo(texture.getWidth());
             int targetHeight = nextPowerOfTwo(texture.getHeight());
             if (texture.getWidth() != targetWidth || texture.getHeight() != targetHeight) {
@@ -121,30 +181,37 @@ public class Block3D extends JFrame {
     }
 
     private double[] rotatePoint(double[] point) {
+
+        double[] translate = new double[3];
+
+        translate[0] = point[0] + posX;
+        translate[1] = point[1] + posY;
+        translate[2] = point[2] + posZ;
         double[] rotated = new double[3];
 
         // Rotate around Y axis
         double cosY = Math.cos(angleY);
         double sinY = Math.sin(angleY);
-        double tempX = point[0] * cosY + point[2] * sinY;
-        double tempZ = -point[0] * sinY + point[2] * cosY;
+        double tempX = translate[0] * cosY + translate[2] * sinY;
+        double tempZ = -translate[0] * sinY + translate[2] * cosY;
 
         // Rotate around X axis
         double cosX = Math.cos(angleX);
         double sinX = Math.sin(angleX);
         rotated[0] = tempX;
-        rotated[1] = point[1] * cosX - tempZ * sinX;
-        rotated[2] = point[1] * sinX + tempZ * cosX;
+        rotated[1] = translate[1] * cosX - tempZ * sinX;
+        rotated[2] = translate[1] * sinX + tempZ * cosX;
 
         return rotated;
     }
 
     private Point3D project3D(double[] point3D) {
-        double z = 400;
-        double scale = 200;
+        double z = CAMERA_DISTANCE - 400;
+        if (z < 1) z = 1;
+        double baseScale = Math.min(WIDTH, HEIGHT) * 0.625;
         double projZ = z - point3D[2];
-        int x = (int) (point3D[0] * scale / projZ + WIDTH / 2);
-        int y = (int) (point3D[1] * scale / projZ + HEIGHT / 2);
+        int x = (int) (point3D[0] * baseScale * scale / projZ + WIDTH / 2);
+        int y = (int) (point3D[1] * baseScale * scale / projZ + HEIGHT / 2);
         return new Point3D(x, y, projZ);
     }
 
@@ -156,8 +223,36 @@ public class Block3D extends JFrame {
         return depth / face.length;
     }
 
+    // @Override
+    // public void paint(Graphics g) {
+    //     BufferedImage buffer = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
+    //     Graphics2D g2d = buffer.createGraphics();
+
+    //     // Draw background
+    //     g2d.setColor(Color.WHITE);
+    //     g2d.fillRect(0, 0, WIDTH, HEIGHT);
+
+    //     List<Face> faceList = new ArrayList<>();
+    //     for (int i = 0; i < faces.length; i++) {
+    //         int[] face = faces[i];
+    //         double depth = calculateFaceDepth(face);
+    //         faceList.add(new Face(face, depth));
+    //     }
+
+    //     // Sort faces by depth (farthest to nearest)
+    //     Collections.sort(faceList);
+
+    //     // Draw faces with texture mapping
+    //     for (Face face : faceList) {
+    //         drawTexturedFace(buffer, face.vertices);
+    //     }
+
+    //     g.drawImage(buffer, 0, 0, this);
+    // }
+
     @Override
-    public void paint(Graphics g) {
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
         BufferedImage buffer = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2d = buffer.createGraphics();
 
@@ -183,12 +278,31 @@ public class Block3D extends JFrame {
         g.drawImage(buffer, 0, 0, this);
     }
 
+
     private void drawTexturedFace(BufferedImage buffer, int[] faceVertices) {
         Point3D[] projectedPoints = new Point3D[4];
+
+        double[][] uvCoords = new double[4][3];
+
         for (int i = 0; i < 4; i++) {
-            projectedPoints[i] = project3D(rotatePoint(vertices[faceVertices[i]]));
+            double[] rotated = rotatePoint(vertices[faceVertices[i]]);
+            projectedPoints[i] = project3D(rotated);
+
+            double z = 400 - rotated[2];
+            double w = 1.0 / z;
+
+            // Store u/z, v/z, and 1/z
+            // Map vertex index to u,v coordinates (0,0) to (1,1)
+            double u = (i == 1 || i == 2) ? 1.0 : 0.0;
+            double v = (i == 2 || i == 3) ? 1.0 : 0.0;
+
+            uvCoords[i][0] = u * w; // u/z
+            uvCoords[i][1] = v * w; // v/z
+            uvCoords[i][2] = w;     // 1/z
+
         }
 
+        
         // Find bounding box
         int minX = WIDTH, minY = HEIGHT, maxX = 0, maxY = 0;
         for (Point3D p : projectedPoints) {
@@ -209,7 +323,7 @@ public class Block3D extends JFrame {
             for (int x = minX; x <= maxX; x++) {
                 if (isPointInPolygon(x, y, projectedPoints)) {
                     // Calculate bilinear coordinates for quad
-                    double[] coords = calculateQuadTextureCoordinates(x, y, projectedPoints);
+                    double[] coords = calculateQuadTextureCoordinates(x, y, projectedPoints, uvCoords);
                     if (coords != null) {
                         double u = coords[0];
                         double v = coords[1];
@@ -240,13 +354,13 @@ public class Block3D extends JFrame {
         return result;
     }
 
-    private double[] calculateQuadTextureCoordinates(int x, int y, Point3D[] points) {
+    private double[] calculateQuadTextureCoordinates(int x, int y, Point3D[] points, double[][] uvCoords) {
         // Convert screen coordinates to normalized device coordinates (-1 to 1)
         double normalizedX = (2.0 * x / WIDTH) - 1.0;
         double normalizedY = (2.0 * y / HEIGHT) - 1.0;
 
         // Inverse bilinear interpolation
-        double[] result = solveInverseBilinear(
+        double[] bilinearCoor = solveInverseBilinear(
             normalizedX, normalizedY,
             points[0].x / (double)WIDTH * 2 - 1, points[0].y / (double)HEIGHT * 2 - 1,
             points[1].x / (double)WIDTH * 2 - 1, points[1].y / (double)HEIGHT * 2 - 1,
@@ -254,7 +368,34 @@ public class Block3D extends JFrame {
             points[3].x / (double)WIDTH * 2 - 1, points[3].y / (double)HEIGHT * 2 - 1
         );
 
-        return result;
+        if(bilinearCoor == null){
+            return null;
+        }
+
+        double u = bilinearCoor[0];
+        double v = bilinearCoor[1];
+
+        double uz = bilinearInterpolation(uvCoords, 0, u, v);
+        double uv = bilinearInterpolation(uvCoords, 1, u, v);
+        double inverse_z = bilinearInterpolation(uvCoords, 2, u, v);
+
+        if(Math.abs(inverse_z) < 1e-6){
+            return null;
+        }
+        double perspU = uz / inverse_z;
+        double perspV = uv / inverse_z;
+
+        return new double[]{
+            Math.max(0, Math.min(1, perspU)),
+            Math.max(0, Math.min(1, perspV))
+        };
+    }
+
+    private double bilinearInterpolation(double[][] values, int index, double u, double v){
+        return (1-u) * (1-v) * values[0][index] + 
+            u*(1-v) * values[1][index] + 
+            u * v * values[2][index] + 
+            (1-u) * v * values[3][index];
     }
 
     private double[] solveInverseBilinear(double x, double y, 
@@ -301,35 +442,6 @@ public class Block3D extends JFrame {
         }
 
         return null;
-    }
-
-
-    // private double[] calculateBarycentricCoordinates(int x, int y, Point3D[] points) {
-    //     double det = (points[1].y - points[2].y) * (points[0].x - points[2].x) +
-    //                 (points[2].x - points[1].x) * (points[0].y - points[2].y);
-        
-    //     if (Math.abs(det) < 1e-6) return null;
-
-    //     double lambda1 = ((points[1].y - points[2].y) * (x - points[2].x) +
-    //                      (points[2].x - points[1].x) * (y - points[2].y)) / det;
-    //     double lambda2 = ((points[2].y - points[0].y) * (x - points[2].x) +
-    //                      (points[0].x - points[2].x) * (y - points[2].y)) / det;
-    //     double lambda3 = 1 - lambda1 - lambda2;
-
-    //     if (lambda1 >= 0 && lambda2 >= 0 && lambda3 >= 0) {
-    //         return new double[]{lambda1, lambda2, lambda3};
-    //     }
-    //     return null;
-    // }
-
-    
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            // Specify the path to your texture image
-            String texturePath = "img/Box.jpg"; 
-            new Block3D(texturePath).setVisible(true);
-        });
     }
 
     private static class Point3D {
