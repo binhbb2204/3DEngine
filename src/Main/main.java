@@ -1,11 +1,13 @@
 package src.Main;
 
+import java.awt.GridLayout;
 import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import src.Shape.Block.Block3D;
@@ -29,13 +31,15 @@ public class main {
             frame.setSize(800, 800);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setResizable(true);
+            JPanel panel = new JPanel(new GridLayout(1, 2));
             // Create the Block3D panel
             Block3D block3D = new Block3D(texturePath, 0, 0, 0);
             Cylinder cylinder = new Cylinder(cylinderPath, 100, 100, 5);
 
-            // Add the panel to the frame
-            frame.add(block3D);
-            frame.add(cylinder);
+            panel.add(block3D);
+            panel.add(cylinder);
+
+            frame.add(panel);
 
             // Set frame visibility
             frame.setVisible(true);
