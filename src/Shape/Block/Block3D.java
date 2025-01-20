@@ -1,6 +1,8 @@
-package src.Block;
+package src.Shape.Block;
 import javax.swing.*;
 
+import src.Main.MouseHandler;
+import src.Main.MouseInteractive;
 import src.geometry.Geometry3D;
 import src.util.Face;
 import src.util.Point3D;
@@ -8,19 +10,13 @@ import src.util.TextureManager;
 import src.util.TextureMapper;
 
 import java.awt.*;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 
-public class Block3D extends JPanel {
+public class Block3D extends JPanel implements MouseInteractive{
     private int HEIGHT = 800;
     private int WIDTH = 800;
     
@@ -29,7 +25,6 @@ public class Block3D extends JPanel {
     private double posZ = 0;
     private double angleX = 0;
     private double angleY = 0;
-    private Point lastMousePos;
     private double scale = 1.0;
     private static final double ZOOM_FACTOR = 0.1;
     
@@ -63,7 +58,6 @@ public class Block3D extends JPanel {
 
     public Block3D(String texturePath, double x, double y, double z) {
         this(texturePath);
-        setPosition(x, y, z);
     }
 
     public Block3D(String texturePath){
@@ -71,96 +65,27 @@ public class Block3D extends JPanel {
         textureManager = new TextureManager(texturePath);
         vertices = initializeVertices();
         faces = initializeFaces();
-        setupEventListeners();
+        MouseHandler mouseHandler = new MouseHandler(this);
+        addMouseListener(mouseHandler);
+        addMouseMotionListener(mouseHandler);
+        addMouseWheelListener(mouseHandler);
     }
 
-    private void setupEventListeners(){
-        addComponentListener(new ComponentListener() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                WIDTH = getWidth();
-                HEIGHT = getHeight();
-                repaint();
-            }
-
-            @Override
-            public void componentMoved(ComponentEvent e) {}
-
-            @Override
-            public void componentShown(ComponentEvent e) {}
-
-            @Override
-            public void componentHidden(ComponentEvent e) {}
-            
-        });
-        setupMouseListeners();
-    }
-
-    private void setupMouseListeners(){
-        addMouseListener(new MouseListener() {
-
-            @Override
-            public void mouseClicked(MouseEvent e) {}
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-                lastMousePos = e.getPoint();
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {}
-
-            @Override
-            public void mouseEntered(MouseEvent e) {}
-
-            @Override
-            public void mouseExited(MouseEvent e) {}
-            
-        });
-
-        addMouseMotionListener(new MouseMotionListener() {
-
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                handleMouseDragged(e);
-            }
-
-            @Override
-            public void mouseMoved(MouseEvent e) {}   
-        });
-
-        addMouseWheelListener(this::handleMouseWheeled);
-    }
-
-    private void handleMouseDragged(MouseEvent e){
-        if (lastMousePos != null) {
-            int dx = e.getX() - lastMousePos.x;
-            int dy = -(e.getY() - lastMousePos.y);
-
-            angleY += dx * 0.01;
-            angleX += dy * 0.01;
-
-            lastMousePos = e.getPoint();
-            repaint();
-        }
-    }
-
-    private void handleMouseWheeled(MouseWheelEvent e){
-        if(e.getWheelRotation() < 0){
-            scale *= (1 + ZOOM_FACTOR);
-        }
-        else{
-            scale *= (1 - ZOOM_FACTOR);
-        }
-
-        scale = Math.max(0.1, Math.min(scale, 5.0));
+    @Override
+    public void rotate(double dAngleY, double dAngleX) {
+        this.angleX += dAngleX;
+        this.angleY += dAngleY;   
         repaint();
     }
 
-    private void setPosition(double x, double y, double z){
-        this.posX = x;
-        this.posY = y;
-        this.posZ = z;
+    @Override
+    public void zoom(int wheelRotation) {
+        if (wheelRotation < 0) {
+            scale *= (1 + ZOOM_FACTOR);
+        } else {
+            scale *= (1 - ZOOM_FACTOR);
+        }
+        scale = Math.max(0.1, Math.min(scale, 5.0));
         repaint();
     }
 
@@ -293,4 +218,6 @@ public class Block3D extends JPanel {
             }
         }
     }
+
+    
 }

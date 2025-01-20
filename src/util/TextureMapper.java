@@ -91,5 +91,32 @@ public class TextureMapper {
         return null;
     }
 
+    public static double[] calculateTriangleTextureCoordinates(int x, int y, Point3D[] points, double[][] uvCoords, int width, int height) {
+        double normalizedX = (2.0 * x / width) - 1.0;
+        double normalizedY = (2.0 * y / height) - 1.0;
+    
+        // Calculate barycentric coordinates
+        double denominator = ((points[1].y - points[2].y) * (points[0].x - points[2].x) + 
+                             (points[2].x - points[1].x) * (points[0].y - points[2].y));
+        if (Math.abs(denominator) < 1e-6) return null;
+    
+        double a = ((points[1].y - points[2].y) * (x - points[2].x) + 
+                    (points[2].x - points[1].x) * (y - points[2].y)) / denominator;
+        double b = ((points[2].y - points[0].y) * (x - points[2].x) + 
+                    (points[0].x - points[2].x) * (y - points[2].y)) / denominator;
+        double c = 1 - a - b;
+    
+        if (a < -0.01 || b < -0.01 || c < -0.01) return null;
+    
+        // Interpolate UV coordinates using barycentric coordinates
+        double u = a * uvCoords[0][0] + b * uvCoords[1][0] + c * uvCoords[2][0];
+        double v = a * uvCoords[0][1] + b * uvCoords[1][1] + c * uvCoords[2][1];
+        double w = a * uvCoords[0][2] + b * uvCoords[1][2] + c * uvCoords[2][2];
+    
+        if (Math.abs(w) < 1e-6) return null;
+    
+        return new double[]{u / w, v / w};
+    }
+
 
 }

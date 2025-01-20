@@ -8,13 +8,15 @@ import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import src.Block.Block3D;
+import src.Shape.Block.Block3D;
+import src.Shape.Cylinder.Cylinder;
 
 public class main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             String texturePath = "src/img/Box1.jpg";
             String iconPath = "src/img/Box.jpg";
+            String cylinderPath = "src/img/Box1.jpg";
             // Create a JFrame
             JFrame frame = new JFrame("3D Engine");
             try {
@@ -29,9 +31,11 @@ public class main {
             frame.setResizable(true);
             // Create the Block3D panel
             Block3D block3D = new Block3D(texturePath, 0, 0, 0);
+            Cylinder cylinder = new Cylinder(cylinderPath, 100, 100, 5);
 
             // Add the panel to the frame
             frame.add(block3D);
+            frame.add(cylinder);
 
             // Set frame visibility
             frame.setVisible(true);

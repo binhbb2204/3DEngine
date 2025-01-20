@@ -21,7 +21,7 @@ public class TextureManager {
             resizePowerOfTwo();
         } catch (Exception e) {
             System.err.println("Error loading texture: " + e.getMessage());
-            createCheckerboardTexture(0, 0);
+            createCheckerboardTexture(256, 256);
         }
     }
 
@@ -51,13 +51,18 @@ public class TextureManager {
 
     private BufferedImage createCheckerboardTexture(int width, int height) {
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        int tileSize = 32;
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
+        int tileSize = 32; // Size of each checker square
+        Graphics2D g2d = img.createGraphics();
+        
+        for (int y = 0; y < height; y += tileSize) {
+            for (int x = 0; x < width; x += tileSize) {
                 boolean isWhite = ((x / tileSize) + (y / tileSize)) % 2 == 0;
-                img.setRGB(x, y, isWhite ? Color.WHITE.getRGB() : Color.BLACK.getRGB());
+                g2d.setColor(isWhite ? Color.WHITE : Color.BLACK);
+                g2d.fillRect(x, y, tileSize, tileSize);
             }
         }
+        
+        g2d.dispose();
         return img;
     }
 
