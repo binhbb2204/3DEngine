@@ -171,9 +171,9 @@ public class Cylinder implements Shape3D{
                 double[] vertex = vertices[faceVertices[i]];
                 double angle = Math.atan2(vertex[2], vertex[0]);  //Calculate angle from x,z coordinates
                 if(angle < 0){
-                    angle += 2 * Math.PI;
+                    angle += 2.0 * Math.PI;
                 }
-                double u = (angle / (2 * Math.PI)) * TEXTURE_SCALE;
+                double u = (angle / (2.0 * Math.PI)) * TEXTURE_SCALE;
                 u = Math.min(1.0, Math.max(0.0, u)); //Ensure U is in [0,1] range
                 double heightRatio = (vertex[1] + HEIGHT_HALF) / (2.0 * HEIGHT_HALF);
                 double v = Math.min(1.0, Math.max(0.0, heightRatio));

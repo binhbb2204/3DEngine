@@ -33,6 +33,7 @@ public class ShapePanel extends JPanel implements MouseInteractive{
 
     public ShapePanel(){
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        setMinimumSize(new Dimension(400, 400));
         shapes = new ArrayList<>();
 
         MouseHandler mouseHandler = new MouseHandler(this);
