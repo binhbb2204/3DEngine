@@ -1,8 +1,6 @@
 package src.Shape.Block;
-import javax.swing.*;
 
-import src.Main.MouseHandler;
-import src.Main.MouseInteractive;
+import src.Panel.ShapePanel.Shape3D;
 import src.geometry.Geometry3D;
 import src.util.Face;
 import src.util.Point3D;
@@ -12,21 +10,17 @@ import src.util.TextureMapper;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 
-public class Block3D extends JPanel implements MouseInteractive{
+public class Block3D implements Shape3D{
     private int HEIGHT = 800;
     private int WIDTH = 800;
     
     private double posX = 0;
     private double posY = 0;
     private double posZ = 0;
-    private double angleX = 0;
-    private double angleY = 0;
-    private double scale = 1.0;
-    private static final double ZOOM_FACTOR = 0.1;
+
     
     private final TextureManager textureManager;
     private final double[][] vertices;
@@ -57,39 +51,20 @@ public class Block3D extends JPanel implements MouseInteractive{
     }
 
     public Block3D(String texturePath, double x, double y, double z) {
-        this(texturePath);
-    }
-
-    public Block3D(String texturePath){
-        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        this.posX = x;
+        this.posY = y;
+        this.posZ = z;
         textureManager = new TextureManager(texturePath);
         vertices = initializeVertices();
         faces = initializeFaces();
-        MouseHandler mouseHandler = new MouseHandler(this);
-        addMouseListener(mouseHandler);
-        addMouseMotionListener(mouseHandler);
-        addMouseWheelListener(mouseHandler);
     }
 
-    @Override
-    public void rotate(double dAngleY, double dAngleX) {
-        this.angleX += dAngleX;
-        this.angleY += dAngleY;   
-        repaint();
+    public Block3D(String texturePath){
+        this(texturePath, 0, 0, 0);
     }
 
-    @Override
-    public void zoom(int wheelRotation) {
-        if (wheelRotation < 0) {
-            scale *= (1 + ZOOM_FACTOR);
-        } else {
-            scale *= (1 - ZOOM_FACTOR);
-        }
-        scale = Math.max(0.1, Math.min(scale, 5.0));
-        repaint();
-    }
 
-    private double calculateFaceDepth(int[] face) {
+    private double calculateFaceDepth(int[] face, double angleX, double angleY) {
         double depth = 0;
         for (int vertex : face) {
             depth += Geometry3D.rotatePoint(vertices[vertex], posX, posY, posZ, angleX, angleY)[2];
@@ -97,51 +72,62 @@ public class Block3D extends JPanel implements MouseInteractive{
         return depth / face.length;
     }
 
+
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        BufferedImage buffer = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = buffer.createGraphics();
-
-        g2d.setColor(Color.WHITE);
-        g2d.fillRect(0, 0, WIDTH, HEIGHT);
-
-        renderFaces(buffer);
-
-        g.drawImage(buffer, 0, 0, this);
+    public double[][] getVertices() {
+        return vertices;
     }
 
-    private void renderFaces(BufferedImage buffer){
+    @Override
+    public List<Face> getFaces(double angleX, double angleY) {
         List<Face> faceList = new ArrayList<>();
-        for (int i = 0; i < faces.length; i++) {
+        for(int i = 0; i < faces.length; i++){
             int[] face = faces[i];
-            double depth = calculateFaceDepth(face);
-            faceList.add(new Face(face, depth));
+            double depth = calculateFaceDepth(face, angleX, angleY);
+            faceList.add(new Face(this, face, depth));
         }
 
-        // Sort faces by depth (farthest to nearest)
-        Collections.sort(faceList);
-
-        // Draw faces with texture mapping
-        for (Face face : faceList) {
-            drawTexturedFace(buffer, face.vertices);
-        }
-
-        
+        return faceList;
     }
 
-    public void drawTexturedFace(BufferedImage buffer, int[] faceVertices){
+    @Override
+    public void renderFace(BufferedImage buffer, Face face, double angleX, double angleY, double scale) {
+        drawTexturedFace(buffer, face.getVertices(), angleX, angleY, scale);
+    }
+
+
+    // private void renderFaces(BufferedImage buffer, double angleX, double angleY, double scale){
+    //     List<Face> faceList = new ArrayList<>();
+    //     for (int i = 0; i < faces.length; i++) {
+    //         int[] face = faces[i];
+    //         double depth = calculateFaceDepth(face, angleX, angleY);
+    //         faceList.add(new Face(face, depth));
+    //     }
+
+    //     // Sort faces by depth (farthest to nearest)
+    //     Collections.sort(faceList);
+
+    //     // Draw faces with texture mapping
+    //     for (Face face : faceList) {
+    //         drawTexturedFace(buffer, face.getVertices(), angleX, angleY, scale);
+    //     }
+        
+    // }
+
+    public void drawTexturedFace(BufferedImage buffer, int[] faceVertices, double angleX, double angleY, double scale){
         Point3D[] projectedPoints = new Point3D[4];
-        double[][] uvCoords = calculateUVCoordinates(faceVertices, projectedPoints);
+        double[][] uvCoords = calculateUVCoordinates(faceVertices, projectedPoints, angleX, angleY, scale);
 
         if(uvCoords == null) return;
 
         Rectangle bounds = calculateBoundingBox(projectedPoints);
-        renderTexturedPolygon(buffer, projectedPoints, uvCoords, bounds);
-        
+        if(bounds != null){
+            renderTexturedPolygon(buffer, projectedPoints, uvCoords, bounds);
+        } 
     }
 
-    private double[][] calculateUVCoordinates(int[] faceVertices, Point3D[] projectedPoints){
+    private double[][] calculateUVCoordinates(int[] faceVertices, Point3D[] projectedPoints,
+                                            double angleX, double angleY, double scale){
         double[][] uvCoords = new double[4][3];
 
         for(int i = 0; i < 4; i++){
@@ -218,6 +204,10 @@ public class Block3D extends JPanel implements MouseInteractive{
             }
         }
     }
+
+    
+
+    
 
     
 }

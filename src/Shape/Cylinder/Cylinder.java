@@ -1,41 +1,32 @@
 package src.Shape.Cylinder;
 
 
-import javax.swing.*;
-
-
-
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import src.Main.MouseHandler;
-import src.Main.MouseInteractive;
+import src.Panel.ShapePanel.Shape3D;
 import src.geometry.Geometry3D;
 import src.util.Face;
 import src.util.Point3D;
 import src.util.TextureManager;
 import src.util.TextureMapper;
 
-public class Cylinder extends JPanel implements MouseInteractive{
+public class Cylinder implements Shape3D{
     private int WIDTH = 800;
     private int HEIGHT = 800;
-
+    private static final double TEXTURE_SCALE = 1.0;
+    private static final double BIAS = 0.00001;
     private double posX = 0;
     private double posY = 0;
     private double posZ = 0;
-    private double angleX = 0;
-    private double angleY = 0;
-    private double scale = 1.0;
-    private static final double ZOOM_FACTOR = 0.1;
-    
+
     private final TextureManager textureManager;
     private final double[][] vertices;
     private final int[][] faces;
     //SEGMENT đại loại là nó là bề ngoài hình trụ nó smoother, the bigger the number, the smoothier the cylinder face is
-    public static final int SEGMENTS = 8;
+    public static final int SEGMENTS = 80;
     public static final int RADIUS = 100;
     public static final int HEIGHT_HALF = 200;
 
@@ -98,40 +89,20 @@ public class Cylinder extends JPanel implements MouseInteractive{
     }
 
     public Cylinder(String texturePath, double x, double y, double z){
-        this(texturePath);
-    }
-
-    public Cylinder(String texturePath){
-        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        this.posX = x;
+        this.posY = y;
+        this.posZ = z;
         textureManager = new TextureManager(texturePath);
         vertices = initializeVertices();
         faces = initializeFaces();
-        MouseHandler mouseHandler = new MouseHandler(this);
-        addMouseListener(mouseHandler);
-        addMouseMotionListener(mouseHandler);
-        addMouseWheelListener(mouseHandler);
+    }
+
+    public Cylinder(String texturePath){
+        this(texturePath, 0, 0, 0);    
     }
 
 
-    @Override
-    public void rotate(double dAngleY, double dAngleX) {
-        this.angleX += dAngleX;
-        this.angleY += dAngleY;   
-        repaint();
-    }
-
-    @Override
-    public void zoom(int wheelRotation) {
-        if (wheelRotation < 0) {
-            scale *= (1 + ZOOM_FACTOR);
-        } else {
-            scale *= (1 - ZOOM_FACTOR);
-        }
-        scale = Math.max(0.1, Math.min(scale, 5.0));
-        repaint();
-    }
-
-    private double calculateFaceDepth(int[] face) {
+    private double calculateFaceDepth(int[] face, double angleX, double angleY) {
         double depth = 0;
         for (int vertex : face) {
             depth += Geometry3D.rotatePoint(vertices[vertex], posX, posY, posZ, angleX, angleY)[2];
@@ -140,39 +111,48 @@ public class Cylinder extends JPanel implements MouseInteractive{
     }
 
     @Override
-    protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
-        BufferedImage buffer = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2d = buffer.createGraphics();
+	public double[][] getVertices() {
+		return vertices;
+	}
 
-        g2d.setColor(Color.WHITE);
-        g2d.fillRect(0, 0, WIDTH, HEIGHT);
+    @Override
+    public List<Face> getFaces(double angleX, double angleY) {
+        List<Face> faceList = new ArrayList<>();
+        for(int i = 0; i < faces.length; i++){
+            int[] face = faces[i];
+            double depth = calculateFaceDepth(face, angleX, angleY);
+            faceList.add(new Face(this, face, depth));
+        }
 
-        renderFaces(buffer);
-
-        g.drawImage(buffer, 0, 0, this);
+        return faceList;
     }
 
-    private void renderFaces(BufferedImage buffer){
-        List<Face> faceList = new ArrayList<>();
-        for (int i = 0; i < faces.length; i++) {
-            int[] face = faces[i];
-            double depth = calculateFaceDepth(face);
-            faceList.add(new Face(face, depth));
-        }
+    @Override
+    public void renderFace(BufferedImage buffer, Face face, double angleX, double angleY, double scale) {
+        drawTexturedFace(buffer, face.getVertices(), angleX, angleY, scale);
+    }
 
-        // Sort faces by depth (farthest to nearest)
-        Collections.sort(faceList);
+    // private void renderFaces(BufferedImage buffer, double angleX, double angleY, double scale){
+    //     List<Face> faceList = new ArrayList<>();
+    //     for (int i = 0; i < faces.length; i++) {
+    //         int[] face = faces[i];
+    //         double depth = calculateFaceDepth(face, angleX, angleY);
+    //         faceList.add(new Face(face, depth));
+    //     }
 
-        // Draw faces with texture mapping
-        for (Face face : faceList) {
-            drawTexturedFace(buffer, face.vertices);
-        }
+    //     // Sort faces by depth (farthest to nearest)
+    //     Collections.sort(faceList);
+
+    //     // Draw faces with texture mapping
+    //     for (Face face : faceList) {
+    //         drawTexturedFace(buffer, face.getVertices(), angleX, angleY, scale);
+    //     }
 
         
-    }
+    // }
+    
 
-    public void drawTexturedFace(BufferedImage buffer, int[] faceVertices){
+    public void drawTexturedFace(BufferedImage buffer, int[] faceVertices, double angleX, double angleY, double scale){
         Point3D[] projectedPoints = new Point3D[faceVertices.length];
         double[][] uvCoords = new double[faceVertices.length][3];
 
@@ -185,11 +165,18 @@ public class Cylinder extends JPanel implements MouseInteractive{
             projectedPoints[i] = Geometry3D.project3D(rotated, WIDTH, HEIGHT, scale);
 
             double z = 400 - rotated[2];
-            double w = 1.0/Math.max(z, 0.001);
+            double w = 1.0/Math.max(z, BIAS);
 
             if (faceVertices.length == 4) { // Side faces
-                double u = (i == 1 || i == 2) ? 1.0 : 0.0;
-                double v = (i == 2 || i == 3) ? 1.0 : 0.0;
+                double[] vertex = vertices[faceVertices[i]];
+                double angle = Math.atan2(vertex[2], vertex[0]);  //Calculate angle from x,z coordinates
+                if(angle < 0){
+                    angle += 2 * Math.PI;
+                }
+                double u = (angle / (2 * Math.PI)) * TEXTURE_SCALE;
+                u = Math.min(1.0, Math.max(0.0, u)); //Ensure U is in [0,1] range
+                double heightRatio = (vertex[1] + HEIGHT_HALF) / (2.0 * HEIGHT_HALF);
+                double v = Math.min(1.0, Math.max(0.0, heightRatio));
                 uvCoords[i] = new double[]{u * w, v * w, w};
             } else { // Top/bottom faces
                 // Calculate radial UV coordinates for circular faces
@@ -242,29 +229,6 @@ public class Cylinder extends JPanel implements MouseInteractive{
         }
     }
 
-    
-
-    // private double[][] calculateUVCoordinates(int[] faceVertices, Point3D[] projectedPoints){
-    //     double[][] uvCoords = new double[4][3];
-
-    //     for(int i = 0; i < 4; i++){
-    //         double[] rotated = Geometry3D.rotatePoint(vertices[faceVertices[i]], posX, posY, posZ, angleX, angleY);
-
-    //         projectedPoints[i] = Geometry3D.project3D(rotated, WIDTH, HEIGHT, scale);
-
-    //         double z = 400 - rotated[2];
-    //         double w = 1.0/Math.max(z, 0.001);
-
-    //         double u = (i == 1 || i == 2) ? 1.0 : 0.0;
-    //         double v = (i == 2 || i == 3) ? 1.0 : 0.0;
-
-    //         uvCoords[i][0] = u * w;
-    //         uvCoords[i][1] = v * w;
-    //         uvCoords[i][2] = w;
-    //     }
-    //     return uvCoords;
-    // }
-
     private Rectangle calculateBoundingBox(Point3D[] projectedPoints){
         int minX = WIDTH, minY = HEIGHT, maxX = 0, maxY = 0;
         for (Point3D p : projectedPoints) {
@@ -288,22 +252,22 @@ public class Cylinder extends JPanel implements MouseInteractive{
         return new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
     }
 
-    private void renderTexturedPolygon(BufferedImage buffer, Point3D[] projectedPoints, double[][] uvCoords, Rectangle bounds){
-        BufferedImage texture = textureManager.getTexture();
+    // private void renderTexturedPolygon(BufferedImage buffer, Point3D[] projectedPoints, double[][] uvCoords, Rectangle bounds){
+    //     BufferedImage texture = textureManager.getTexture();
 
-        for(int y = bounds.y; y <= bounds.y + bounds.height; y++){
-            for(int x = bounds.x; x <= bounds.x + bounds.width; x++){
-                if(Geometry3D.isPointInPolygon(x, y, projectedPoints)){
-                    double[] coords = TextureMapper.calculateQuadTextureCoordinates(x, y, projectedPoints, 
-                                                                                    uvCoords, WIDTH, HEIGHT);
+    //     for(int y = bounds.y; y <= bounds.y + bounds.height; y++){
+    //         for(int x = bounds.x; x <= bounds.x + bounds.width; x++){
+    //             if(Geometry3D.isPointInPolygon(x, y, projectedPoints)){
+    //                 double[] coords = TextureMapper.calculateQuadTextureCoordinates(x, y, projectedPoints, 
+    //                                                                                 uvCoords, WIDTH, HEIGHT);
 
-                    if(coords != null){
-                        applyTexture(buffer, x, y, coords[0],coords[1], texture);
-                    }
-                }
-            }
-        }
-    }
+    //                 if(coords != null){
+    //                     applyTexture(buffer, x, y, coords[0],coords[1], texture);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
     public void applyTexture(BufferedImage buffer, int x, int y, double u, double v, BufferedImage texture){
         u = Math.max(0.0, Math.min(1.0, u));
@@ -321,4 +285,10 @@ public class Cylinder extends JPanel implements MouseInteractive{
             }
         }
     }
+
+
+
+	
+
+    
 }
