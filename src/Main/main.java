@@ -11,6 +11,7 @@ import javax.swing.SwingUtilities;
 import src.Panel.ShapePanel;
 import src.Shape.Block.Block3D;
 import src.Shape.Cylinder.Cylinder;
+import src.Shape.Sphere.Sphere;
 
 public class main {
     public static void main(String[] args) {
@@ -54,6 +55,7 @@ public class main {
             Cylinder cylinder = new Cylinder(cylinderPath,200, 0, 0);
             Cylinder cylinder1 = new Cylinder(cylinderPath,-200, 0, 0);
             // Cylinder cylinder = new Cylinder(cylinderPath, 100, 100, 5);
+            Sphere sphere = new Sphere(texturePath, 300, 300, 300);
             shapePanel.addShape(block3D);
             shapePanel.addShape(block3D_1);
             shapePanel.addShape(block3D_2);
@@ -73,6 +75,7 @@ public class main {
             // shapePanel.addShape(block3D_16);
             shapePanel.addShape(cylinder);
             shapePanel.addShape(cylinder1);
+            shapePanel.addShape(sphere);
             // panel.add(block3D);
             //panel.add(cylinder);
             frame.add(shapePanel);
