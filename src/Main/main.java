@@ -52,10 +52,10 @@ public class main {
             // Block3D block3D_14 = new Block3D(texturePath,-400 ,-400 ,0);
             // Block3D block3D_15 = new Block3D(texturePath,200 ,400 ,0);
             // Block3D block3D_16 = new Block3D(texturePath,400 ,400 ,0);
-            Cylinder cylinder = new Cylinder(cylinderPath,200, 0, 0);
-            Cylinder cylinder1 = new Cylinder(cylinderPath,-200, 0, 0);
+            // Cylinder cylinder = new Cylinder(cylinderPath,200, 0, 0);
+            // Cylinder cylinder1 = new Cylinder(cylinderPath,-200, 0, 0);
             // Cylinder cylinder = new Cylinder(cylinderPath, 100, 100, 5);
-            Sphere sphere = new Sphere(texturePath, 300, 300, 300);
+            // Sphere sphere = new Sphere(texturePath, 300, 300, 300);
             shapePanel.addShape(block3D);
             shapePanel.addShape(block3D_1);
             shapePanel.addShape(block3D_2);
@@ -73,9 +73,9 @@ public class main {
             // shapePanel.addShape(block3D_14);
             // shapePanel.addShape(block3D_15);
             // shapePanel.addShape(block3D_16);
-            shapePanel.addShape(cylinder);
-            shapePanel.addShape(cylinder1);
-            shapePanel.addShape(sphere);
+            // shapePanel.addShape(cylinder);
+            // shapePanel.addShape(cylinder1);
+            // shapePanel.addShape(sphere);
             // panel.add(block3D);
             //panel.add(cylinder);
             frame.add(shapePanel);
